@@ -1,0 +1,9 @@
+{
+	"name": "helloworld-application",
+	"version": "0.0.1",
+	"authors": "Iot",
+	"private": true,
+	"dependencies": {
+		"bootstrap-sass": "~3"
+	}
+}

@@ -1,0 +1,26 @@
+// Place your settings in this file to overwrite default and user settings.
+{
+        // Configure glob patterns for excluding files and folders.
+    "files.exclude": {
+        ".vscode": true,
+        "**/.tmp": true,
+        "**/.git": true,
+        "**/node_modules": true,
+        "dist.*": true,
+        ".stfolder": true
+    },
+
+    // Search
+    // Configure glob patterns for excluding files and folders in searches. Inherits all glob patterns from the files.exclude setting.
+    "search.exclude": {
+        "**/*.tmp": true,
+        "**/*.git": true,
+        "**/node_modules": true,
+        "**/bower_components": true,
+        "dist.*": true,
+        "build": true,
+        "**/*.min.js": true,
+        "**/*.js.map": true
+    }
+
+}
