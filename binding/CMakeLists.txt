@@ -18,10 +18,11 @@
 ###########################################################################
 
 # Add target to project dependency list
-PROJECT_TARGET_ADD(helloworld-binding)
+PROJECT_TARGET_ADD(stat)
 
 	# Define project Targets
-	add_library(${TARGET_NAME} MODULE ${TARGET_NAME}.c)
+	file(GLOB sourcelist "*.c")
+	add_library(${TARGET_NAME} MODULE ${sourcelist})
 
 	# Binder exposes a unique public entry point
 	SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES
