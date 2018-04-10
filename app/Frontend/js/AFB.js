@@ -1,4 +1,4 @@
-AFB = function(base, initialtoken){
+var AFB = function(base, initialtoken){
 
 var urlws = "ws://"+window.location.host+"/"+base;
 var urlhttp = "http://"+window.location.host+"/"+base;

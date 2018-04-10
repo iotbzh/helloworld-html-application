@@ -20,21 +20,25 @@
 # Add target to project dependency list
 PROJECT_TARGET_ADD(helloworld-app)
 
+	# build for prod or development
+	#set(HTML_MODE prod)
+	set(HTML_MODE dev)
+
 	# Define project Targets
-	add_custom_command(OUTPUT dist.prod
+	add_custom_command(OUTPUT dist.${HTML_MODE}
 		DEPENDS ${TARGET_NAME}
 		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-		COMMAND [ -d "dist.prod" ] || npm install
-		COMMAND [ -d "dist.prod" ] || gulp build-app-prod
-		COMMAND touch dist.prod
-		COMMAND cp -r dist.prod ${CMAKE_CURRENT_BINARY_DIR}
+		COMMAND [ -d "dist.${HTML_MODE}" ] || npm install
+		COMMAND [ -d "dist.${HTML_MODE}" ] || gulp build-app-${HTML_MODE}
+		COMMAND touch dist.${HTML_MODE}
+		COMMAND cp -r dist.${HTML_MODE} ${CMAKE_CURRENT_BINARY_DIR}
 	)
 
-	add_custom_target(${TARGET_NAME} ALL DEPENDS dist.prod)
+	add_custom_target(${TARGET_NAME} ALL DEPENDS dist.${HTML_MODE})
 
 	# Binder exposes a unique public entry point
 	SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES
 		LABELS "HTDOCS"
-		OUTPUT_NAME dist.prod
+		OUTPUT_NAME dist.${HTML_MODE}
 	)
 
