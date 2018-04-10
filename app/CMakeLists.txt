@@ -22,22 +22,19 @@ PROJECT_TARGET_ADD(helloworld-app)
 
 	# Define project Targets
 	add_custom_command(OUTPUT dist.prod
-	DEPENDS ${TARGET_NAME}
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-	COMMAND [ -d "dist.prod" ] || npm install
-	COMMAND [ -d "dist.prod" ] || gulp build-app-prod
-	COMMAND touch dist.prod
-	COMMAND cp -r dist.prod ${CMAKE_CURRENT_BINARY_DIR})
+		DEPENDS ${TARGET_NAME}
+		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+		COMMAND [ -d "dist.prod" ] || npm install
+		COMMAND [ -d "dist.prod" ] || gulp build-app-prod
+		COMMAND touch dist.prod
+		COMMAND cp -r dist.prod ${CMAKE_CURRENT_BINARY_DIR}
+	)
 
 	add_custom_target(${TARGET_NAME} ALL DEPENDS dist.prod)
 
 	# Binder exposes a unique public entry point
 	SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES
 		LABELS "HTDOCS"
-		OUTPUT_NAME dist.prod)
+		OUTPUT_NAME dist.prod
+	)
 
-	# installation directory
-	INSTALL(DIRECTORY dist.prod/ DESTINATION ${BINDINGS_INSTALL_DIR})
-
-# Add subdir targets
-project_subdirs_add()

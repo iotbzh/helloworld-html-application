@@ -32,10 +32,10 @@ PROJECT_TARGET_ADD(stat)
 		OUTPUT_NAME ${TARGET_NAME}
 	)
 
+    # Change default OPenAPI file
+    SET_OPENAPI_FILENAME("stat-apidef")
+
 	# Library dependencies (include updates automatically)
 	TARGET_LINK_LIBRARIES(${TARGET_NAME}
 		${link_libraries})
 
-	# installation directory
-	INSTALL(TARGETS ${TARGET_NAME}
-		LIBRARY DESTINATION ${BINDINGS_INSTALL_DIR})

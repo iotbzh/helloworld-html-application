@@ -46,11 +46,20 @@ set(PROJECT_APP_TEMPLATES_DIR "conf.d/app-templates")
 # Compilation Mode (DEBUG, RELEASE)
 # ----------------------------------
 set(CMAKE_BUILD_TYPE "DEBUG")
+#set(USE_EFENCE 1)
 
-# Kernel selection if needed. Impose a minimal version.
-# NOTE FOR NOW IT CHECKS KERNEL Yocto SDK Kernel version
-# else only HOST VERSION
+# Kernel selection if needed. You can choose between a
+# mandatory version to impose a minimal version.
+# Or check Kernel minimal version and just print a Warning
+# about missing features and define a preprocessor variable
+# to be used as preprocessor condition in code to disable
+# incompatibles features. Preprocessor define is named
+# KERNEL_MINIMAL_VERSION_OK.
+#
+# NOTE*** FOR NOW IT CHECKS KERNEL Yocto environment and
+# Yocto SDK Kernel version.
 # -----------------------------------------------
+#set (kernel_mandatory_version 4.8)
 #set (kernel_minimal_version 4.8)
 
 # Compiler selection if needed. Impose a minimal version.
@@ -63,26 +72,27 @@ set (PKG_REQUIRED_LIST
 	json-c
 	libsystemd>=222
 	afb-daemon
+	libmicrohttpd>=0.9.55
 )
+
+# Prefix path where will be installed the files
+# Default: /usr/local (need root permission to write in)
+# ------------------------------------------------------
+set(CMAKE_INSTALL_PREFIX $ENV{HOME}/opt)
 
 # Compilation options definition
 # Use CMake generator expressions to specify only for a specific language
 # -----------------------------------------------------------------------
 add_compile_options()
 
-# Print a helper message when every thing is finished
-# ----------------------------------------------------
-#set(CLOSING_MESSAGE "")
-#set(PACKAGE_MESSAGE "Install widget file using in the target : afm-util install ${PROJECT_NAME}.wgt")
-
 # (BUG!!!) as PKG_CONFIG_PATH does not work [should be an env variable]
 # ---------------------------------------------------------------------
-set(CMAKE_INSTALL_PREFIX $ENV{HOME}/opt)
 set(CMAKE_PREFIX_PATH ${CMAKE_INSTALL_PREFIX}/lib64/pkgconfig ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
 set(LD_LIBRARY_PATH ${CMAKE_INSTALL_PREFIX}/lib64 ${CMAKE_INSTALL_PREFIX}/lib)
 
 # Optional location for config.xml.in
 # -----------------------------------
+#set(WIDGET_ICON "\"conf.d/wgt/${PROJECT_ICON}\"" CACHE PATH "Path to the widget icon")
 set(WIDGET_CONFIG_TEMPLATE ${CMAKE_CURRENT_SOURCE_DIR}/conf.d/wgt/config.xml.in)
 
 # Mandatory widget Mimetype specification of the main unit
@@ -121,10 +131,6 @@ set(WIDGET_ENTRY_POINT htdocs/index.html)
 # -------------------------
 #set(EXTRA_LINK_LIBRARIES)
 
-# Optional force binding installation
-# ------------------------------------
-# set(BINDINGS_INSTALL_PREFIX PrefixPath )
-
 # Optional force binding Linking flag
 # ------------------------------------
 # set(BINDINGS_LINK_FLAG LinkOptions )
@@ -136,8 +142,20 @@ set(WIDGET_ENTRY_POINT htdocs/index.html)
 # Optional Application Framework security token
 # and port use for remote debugging.
 #------------------------------------------------------------
-#set(AFB_TOKEN   ""      CACHE PATH "Default AFB_TOKEN")
-#set(AFB_REMPORT "1234" CACHE PATH "Default AFB_TOKEN")
+set(AFB_TOKEN   ""     CACHE PATH "Default binder security token")
+set(AFB_REMPORT "1234" CACHE PATH "Default binder listening port")
+
+# Print a helper message when every thing is finished
+# ----------------------------------------------------
+set(CLOSING_MESSAGE "Typical binding launch: afb-daemon --port=${AFB_REMPORT} --workdir=${CMAKE_BINARY_DIR}/package --ldpaths=lib --roothttp=htdocs  --token=\"${AFB_TOKEN}\" --tracereq=common --verbose")
+set(PACKAGE_MESSAGE "Install widget file using in the target : afm-util install ${PROJECT_NAME}.wgt")
+
+# Optional schema validator about now only XML, LUA and JSON
+# are supported
+#------------------------------------------------------------
+#set(LUA_CHECKER "luac" "-p" CACHE STRING "LUA compiler")
+#set(XML_CHECKER "xmllint" CACHE STRING "XML linter")
+#set(JSON_CHECKER "json_verify" CACHE STRING "JSON linter")
 
 # This include is mandatory and MUST happens at the end
 # of this file, else you expose you to unexpected behavior
