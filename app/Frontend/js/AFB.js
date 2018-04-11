@@ -1,21 +1,47 @@
-var AFB = function(base, initialtoken){
+/*
+ * Copyright (C) 2017, 2018 "IoT.bzh"
+ * Author: José Bollo <jose.bollo@iot.bzh>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+AFB = function(base, initialtoken){
 
-var urlws = "ws://"+window.location.host+"/"+base;
-var urlhttp = "http://"+window.location.host+"/"+base;
+if (typeof base != "object")
+	base = { base: base, token: initialtoken };
+
+var initial = {
+	base: base.base || "api",
+	token: base.token || initialtoken || "HELLO",
+	host: base.host || window.location.host,
+	url: base.url || undefined
+};
+
+var urlws = initial.url || "ws://"+initial.host+"/"+initial.base;
 
 /*********************************************/
 /****                                     ****/
 /****             AFB_context             ****/
 /****                                     ****/
 /*********************************************/
-var AFB_context = (function() {
-	var UUID;
-	var TOKEN = initialtoken;
+var AFB_context;
+{
+	var UUID = undefined;
+	var TOKEN = initial.token;
 
 	var context = function(token, uuid) {
 		this.token = token;
 		this.uuid = uuid;
-	};
+	}
 
 	context.prototype = {
 		get token() {return TOKEN;},
@@ -24,14 +50,15 @@ var AFB_context = (function() {
 		set uuid(id) {if(id) UUID=id;}
 	};
 
-	return new context();
-})();
+	AFB_context = new context();
+}
 /*********************************************/
 /****                                     ****/
 /****             AFB_websocket           ****/
 /****                                     ****/
 /*********************************************/
-var AFB_websocket = (function() {
+var AFB_websocket;
+{
 	var CALL = 2;
 	var RETOK = 3;
 	var RETERR = 4;
@@ -39,7 +66,7 @@ var AFB_websocket = (function() {
 
 	var PROTO1 = "x-afb-ws-json1";
 
-	var result = function(onopen, onabort) {
+	AFB_websocket = function(on_open, on_abort) {
 		var u = urlws;
 		if (AFB_context.token) {
 			u = u + '?x-afb-token=' + AFB_context.token;
@@ -47,6 +74,7 @@ var AFB_websocket = (function() {
 				u = u + '&x-afb-uuid=' + AFB_context.uuid;
 		}
 		this.ws = new WebSocket(u, [ PROTO1 ]);
+		this.url = u;
 		this.pendings = {};
 		this.awaitens = {};
 		this.counter = 0;
@@ -54,9 +82,9 @@ var AFB_websocket = (function() {
 		this.ws.onerror = onerror.bind(this);
 		this.ws.onclose = onclose.bind(this);
 		this.ws.onmessage = onmessage.bind(this);
-		this.onopen = onopen;
-		this.onabort = onabort;
-	};
+		this.onopen = on_open;
+		this.onabort = on_abort;
+	}
 
 	function onerror(event) {
 		var f = this.onabort;
@@ -77,8 +105,7 @@ var AFB_websocket = (function() {
 
 	function onclose(event) {
 		for (var id in this.pendings) {
-			var ferr = this.pendings[id].onerror;
-			ferr && ferr(null, this);
+			try { this.pendings[id][1](); } catch (x) {/*TODO?*/}
 		}
 		this.pendings = {};
 		this.onclose && this.onclose();
@@ -103,8 +130,7 @@ var AFB_websocket = (function() {
 		if (id in pendings) {
 			var p = pendings[id];
 			delete pendings[id];
-			var f = p[offset];
-			f && f(ans);
+			try { p[offset](ans); } catch (x) {/*TODO?*/}
 		}
 	}
 
@@ -130,17 +156,31 @@ var AFB_websocket = (function() {
 
 	function close() {
 		this.ws.close();
+		this.ws.onopen = 
+		this.ws.onerror = 
+		this.ws.onclose = 
+		this.ws.onmessage = 
+		this.onopen = 
+		this.onabort = function(){};
 	}
 
-	function call(method, request, onsuccess, onfailure) {
-		var id, arr;
-		do {
-			id = String(this.counter = 4095 & (this.counter + 1));
-		} while (id in this.pendings);
-		this.pendings[id] = [ onsuccess, onfailure ];
-		arr = [CALL, id, method, request ];
-		if (AFB_context.token) arr.push(AFB_context.token);
-		this.ws.send(JSON.stringify(arr));
+	function call(method, request, callid) {
+		return new Promise((function(resolve, reject){
+			var id, arr;
+			if (callid) {
+				id = String(callid);
+				if (id in this.pendings)
+					throw new Error("pending callid("+id+") exists");
+			} else {
+				do {
+					id = String(this.counter = 4095 & (this.counter + 1));
+				} while (id in this.pendings);
+			}
+			this.pendings[id] = [ resolve, reject ];
+			arr = [CALL, id, method, request ];
+			if (AFB_context.token) arr.push(AFB_context.token);
+			this.ws.send(JSON.stringify(arr));
+		}).bind(this));
 	}
 
 	function onevent(name, handler) {
@@ -149,14 +189,12 @@ var AFB_websocket = (function() {
 		list.push(handler);
 	}
 
-	result.prototype = {
+	AFB_websocket.prototype = {
 		close: close,
 		call: call,
 		onevent: onevent
 	};
-
-	return result;
-})();
+}
 /*********************************************/
 /****                                     ****/
 /****                                     ****/
